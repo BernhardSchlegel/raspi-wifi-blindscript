@@ -16,16 +16,16 @@
 ###############################################################
 
 # SSID (aka. network name).
-SSID='ssid_goes_here'
+SSID=$1
 
 # Network encryption method.
 # * 'WPA' for WPA-PSK/WPA2-PSK (note: most Wi-Fi networks use WPA);
 # * 'WEP' for WEP;
 # * 'Open' for open network (aka. no password).
-ENCRYPTION='WPA'
+ENCRYPTION=$2
 
 # Network password. (WPA-PSK/WPA2-PSK password, or WEP key)
-PASSWORD='network_password_goes_here'
+PASSWORD=$3
 
 ###############################################################
 ####################   OK. STOP EDITING!   ####################
@@ -36,11 +36,19 @@ if [ $(id -u) -ne 0 ]; then
   exit 1
 fi
 
+printf 'Using SSDI %s...\n' "$SSID"
 NETID=$(wpa_cli add_network | tail -n 1)
+if [ $NETID -gt 0 ]; then
+    printf 'theres already a network configured... overwriting.\n'
+    NETID=0
+fi
+
+printf 'Netid is %s...\n' "$NETID"
 wpa_cli set_network $NETID ssid \"$SSID\"
 case $ENCRYPTION in
 'WPA')
     wpa_cli set_network $NETID key_mgmt WPA-PSK
+    printf 'Using password %s...\n' "$PASSWORD"
     wpa_cli set_network $NETID psk \"$PASSWORD\"
     ;;
 'WEP')
@@ -54,3 +62,4 @@ case $ENCRYPTION in
 esac
 wpa_cli enable_network $NETID
 wpa_cli save_config
+
